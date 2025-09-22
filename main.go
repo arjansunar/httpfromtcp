@@ -20,9 +20,9 @@ func main() {
 }
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
-	res := make(chan string)
+	res := make(chan string, 1)
 	currentLine := ""
-	go func(res chan string) {
+	go func() {
 		defer f.Close()
 		defer close(res)
 		for {
@@ -47,6 +47,6 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 			}
 
 		}
-	}(res)
+	}()
 	return res
 }
