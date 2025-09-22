@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -14,6 +15,7 @@ func main() {
 		return
 	}
 
+	currentLine := ""
 	for {
 		buffer := make([]byte, 8)
 		_, err = file.Read(buffer)
@@ -24,6 +26,15 @@ func main() {
 			log.Fatal("Unable to read file")
 			return
 		}
-		fmt.Printf("read: %s\n", buffer)
+
+		parts := bytes.Split(buffer, []byte("\n"))
+		if len(parts) == 1 {
+			currentLine = fmt.Sprint(currentLine, string(parts[0]))
+		}
+		if len(parts) == 2 {
+			currentLine = fmt.Sprint(currentLine, string(parts[0]))
+			fmt.Printf("read: %s\n", currentLine)
+			currentLine = fmt.Sprint(string(parts[1]))
+		}
 	}
 }
