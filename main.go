@@ -14,27 +14,39 @@ func main() {
 		log.Fatal("Unable to open file.")
 		return
 	}
-
-	currentLine := ""
-	for {
-		buffer := make([]byte, 8)
-		_, err = file.Read(buffer)
-		if err == io.EOF {
-			os.Exit(0)
-		}
-		if err != nil {
-			log.Fatal("Unable to read file")
-			return
-		}
-
-		parts := bytes.Split(buffer, []byte("\n"))
-		if len(parts) == 1 {
-			currentLine = fmt.Sprint(currentLine, string(parts[0]))
-		}
-		if len(parts) == 2 {
-			currentLine = fmt.Sprint(currentLine, string(parts[0]))
-			fmt.Printf("read: %s\n", currentLine)
-			currentLine = fmt.Sprint(string(parts[1]))
-		}
+	for line := range getLinesChannel(file) {
+		fmt.Printf("read: %s\n", line)
 	}
+}
+
+func getLinesChannel(f io.ReadCloser) <-chan string {
+	res := make(chan string)
+	currentLine := ""
+	go func(res chan string) {
+		defer f.Close()
+		defer close(res)
+		for {
+			buffer := make([]byte, 8)
+			_, err := f.Read(buffer)
+			if err == io.EOF {
+				return
+			}
+			if err != nil {
+				log.Fatal("Unable to read file")
+			}
+
+			parts := bytes.Split(buffer, []byte("\n"))
+			for i, part := range parts {
+				if i == 0 {
+					currentLine += string(part)
+				} else {
+					res <- currentLine
+					currentLine = ""
+					currentLine += string(part)
+				}
+			}
+
+		}
+	}(res)
+	return res
 }
